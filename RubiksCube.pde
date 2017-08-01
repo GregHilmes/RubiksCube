@@ -5,6 +5,9 @@ import peasy.*;
 
 PeasyCam CAM;
 
+PeasyCam BUFFERCAM;
+PGraphics buffer;
+
 float R = 50;
 
 // The center of our sketch.
@@ -36,10 +39,17 @@ void setup() {
     strokeWeight(5);
     stroke(0);
 
+    surface.setTitle("Rubik's Cube Simulator");
+
     // Camera setup.
     CAM = new PeasyCam(this, 600);
     CAM.setResetOnDoubleClick(false);
     CAM.setMinimumDistance((3 * R) * sqrt(3) + 200);
+
+    buffer = createGraphics(width, height, P3D);
+    BUFFERCAM = new PeasyCam(this, buffer, 600);
+    BUFFERCAM.setResetOnDoubleClick(false);
+    BUFFERCAM.setMinimumDistance((3 * R) * sqrt(3) + 200);
 
     cube = new Cube();
 }
@@ -49,8 +59,42 @@ void draw() {
 
     cube.update();  
     cube.show();
+
+    updateBuffer();
 }
 
+void mousePressed() {
+
+    buffer.loadPixels();
+    int c = buffer.pixels[mouseY*width+mouseX];
+
+    PVector axis = null;
+    int direction;
+
+    if (c == BLUE) 
+        axis = PX;
+    else if (c == WHITE)
+        axis = PY;
+    else if (c == RED)
+        axis = PZ;
+    else if (c == GREEN)
+        axis = NX;
+    else if (c == YELLOW)
+        axis = NY;
+    else if (c == ORANGE)
+        axis = NZ;
+
+    if (axis != null) {
+
+        if (mouseButton == RIGHT) {
+            direction = -1;
+        } else {
+            direction = 1;
+        }
+
+        cube.turn(axis, direction);
+    }
+}
 void keyPressed() {
     switch (key) {
     case '`': 
@@ -95,4 +139,52 @@ void keyPressed() {
     default: 
         break;
     }
+}
+void updateBuffer() {
+    buffer.beginDraw();
+    buffer.noStroke();
+    buffer.background(51);
+    for (PVector orientation : AXES) {
+        buffer.beginShape();
+        if (orientation == PX) {
+            buffer.fill(BLUE);
+            buffer.vertex(3*R, -3*R, 3*R);
+            buffer.vertex(3*R, -3*R, -3*R);
+            buffer.vertex(3*R, 3*R, -3*R);
+            buffer.vertex(3*R, 3*R, 3*R);
+        } else if (orientation == PY) {
+            buffer.fill(WHITE);
+            buffer.vertex(-3*R, 3*R, -3*R);
+            buffer.vertex(3*R, 3*R, -3*R);
+            buffer.vertex(3*R, 3*R, 3*R);
+            buffer.vertex(-3*R, 3*R, 3*R);
+        } else if (orientation == PZ) {
+            buffer.fill(RED);
+            buffer.vertex(-3*R, -3*R, 3*R);
+            buffer.vertex(3*R, -3*R, 3*R);
+            buffer.vertex(3*R, 3*R, 3*R);
+            buffer.vertex(-3*R, 3*R, 3*R);
+        } else if (orientation == NX) {
+            buffer.fill(GREEN);
+            buffer.vertex(-3*R, -3*R, 3*R);
+            buffer.vertex(-3*R, -3*R, -3*R);
+            buffer.vertex(-3*R, 3*R, -3*R);
+            buffer.vertex(-3*R, 3*R, 3*R);
+        } else if (orientation == NY) {
+            buffer.fill(YELLOW);
+            buffer.vertex(-3*R, -3*R, -3*R);
+            buffer.vertex(3*R, -3*R, -3*R);
+            buffer.vertex(3*R, -3*R, 3*R);
+            buffer.vertex(-3*R, -3*R, 3*R);
+        } else if (orientation == NZ) {
+            buffer.fill(ORANGE);
+            buffer.vertex(-3*R, -3*R, -3*R);
+            buffer.vertex(3*R, -3*R, -3*R);
+            buffer.vertex(3*R, 3*R, -3*R);
+            buffer.vertex(-3*R, 3*R, -3*R);
+        }
+        buffer.endShape();
+    }
+
+    buffer.endDraw();
 }
